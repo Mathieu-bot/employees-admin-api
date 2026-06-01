@@ -94,8 +94,7 @@ public class InternService {
                         "Impossible d'assigner un stagiaire à un manager inactif"));
     if (!Boolean.TRUE.equals(manager.getActive())) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST,
-          "Impossible d'assigner un stagiaire à un manager inactif");
+          HttpStatus.BAD_REQUEST, "Impossible d'assigner un stagiaire à un manager inactif");
     }
   }
 }

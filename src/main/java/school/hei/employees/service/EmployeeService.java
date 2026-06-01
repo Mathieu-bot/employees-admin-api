@@ -58,8 +58,7 @@ public class EmployeeService {
           internRepository.findByManagerId(id);
       if (!interns.isEmpty()) {
         throw new ResponseStatusException(
-            HttpStatus.CONFLICT,
-            "Impossible de désactiver un employé qui a encore des stagiaires");
+            HttpStatus.CONFLICT, "Impossible de désactiver un employé qui a encore des stagiaires");
       }
     }
     if (updated.getFirstname() != null) existing.setFirstname(updated.getFirstname());
@@ -84,8 +83,7 @@ public class EmployeeService {
         internRepository.findByManagerId(id);
     if (!interns.isEmpty()) {
       throw new ResponseStatusException(
-          HttpStatus.CONFLICT,
-          "Impossible de désactiver un employé qui a encore des stagiaires");
+          HttpStatus.CONFLICT, "Impossible de désactiver un employé qui a encore des stagiaires");
     }
     employee.setActive(false);
     return employeeRepository.save(employee);

@@ -18,10 +18,12 @@ import org.springframework.http.ResponseEntity;
 
 public class JsonServerUtils {
 
-  private static final List<String> PAGINATION_PARAMS = List.of("_sort", "_order", "_start", "_end");
+  private static final List<String> PAGINATION_PARAMS =
+      List.of("_sort", "_order", "_start", "_end");
   private static final List<String> IGNORED_PARAMS = List.of("q");
 
-  public static <T> Specification<T> filterFrom(Map<String, String> allParams, Class<T> entityClass) {
+  public static <T> Specification<T> filterFrom(
+      Map<String, String> allParams, Class<T> entityClass) {
     return (root, query, criteriaBuilder) -> {
       List<Predicate> predicates = new ArrayList<>();
 
@@ -74,7 +76,8 @@ public class JsonServerUtils {
     return value;
   }
 
-  public static <T> Specification<T> searchFilter(Map<String, String> allParams, Class<T> entityClass) {
+  public static <T> Specification<T> searchFilter(
+      Map<String, String> allParams, Class<T> entityClass) {
     Specification<T> filterSpec = filterFrom(allParams, entityClass);
     String q = allParams.get("q");
 
@@ -107,7 +110,8 @@ public class JsonServerUtils {
     if (allParams.containsKey("_sort")) {
       String sortField = allParams.get("_sort");
       String order = allParams.getOrDefault("_order", "asc");
-      Sort.Direction direction = "desc".equalsIgnoreCase(order) ? Sort.Direction.DESC : Sort.Direction.ASC;
+      Sort.Direction direction =
+          "desc".equalsIgnoreCase(order) ? Sort.Direction.DESC : Sort.Direction.ASC;
       sort = Sort.by(direction, sortField);
     }
 
