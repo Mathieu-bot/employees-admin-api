@@ -1,6 +1,10 @@
 package school.hei.employees.conf;
 
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +37,41 @@ public class JsonServerUtils {
           continue;
         }
 
-        predicates.add(criteriaBuilder.equal(root.get(key), value));
+        Path<?> path = root.get(key);
+        Object converted = convertToTargetType(value.trim(), path.getJavaType());
+        predicates.add(criteriaBuilder.equal(path, converted));
       }
 
       return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     };
+  }
+
+  private static Object convertToTargetType(String value, Class<?> targetType) {
+    if (targetType == Boolean.class || targetType == boolean.class) {
+      return Boolean.valueOf(value);
+    }
+    if (targetType == Integer.class || targetType == int.class) {
+      return Integer.valueOf(value);
+    }
+    if (targetType == Long.class || targetType == long.class) {
+      return Long.valueOf(value);
+    }
+    if (targetType == Double.class || targetType == double.class) {
+      return Double.valueOf(value);
+    }
+    if (targetType == Float.class || targetType == float.class) {
+      return Float.valueOf(value);
+    }
+    if (targetType == BigDecimal.class) {
+      return new BigDecimal(value);
+    }
+    if (targetType == LocalDate.class) {
+      return LocalDate.parse(value);
+    }
+    if (targetType == LocalDateTime.class) {
+      return LocalDateTime.parse(value);
+    }
+    return value;
   }
 
   public static <T> Specification<T> searchFilter(Map<String, String> allParams, Class<T> entityClass) {
