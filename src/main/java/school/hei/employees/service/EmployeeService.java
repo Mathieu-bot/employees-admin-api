@@ -51,6 +51,17 @@ public class EmployeeService {
   @Transactional
   public Employee update(Integer id, Employee updated) {
     Employee existing = findById(id);
+    boolean isBeingDeactivated =
+        Boolean.FALSE.equals(updated.getActive()) && Boolean.TRUE.equals(existing.getActive());
+    if (isBeingDeactivated) {
+      List<school.hei.employees.repository.model.Intern> interns =
+          internRepository.findByManagerId(id);
+      if (!interns.isEmpty()) {
+        throw new ResponseStatusException(
+            HttpStatus.CONFLICT,
+            "Impossible de désactiver un employé qui a encore des stagiaires");
+      }
+    }
     existing.setFirstname(updated.getFirstname());
     existing.setLastname(updated.getLastname());
     existing.setEmail(updated.getEmail());
