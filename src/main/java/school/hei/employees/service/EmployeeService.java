@@ -62,12 +62,12 @@ public class EmployeeService {
             "Impossible de désactiver un employé qui a encore des stagiaires");
       }
     }
-    existing.setFirstname(updated.getFirstname());
-    existing.setLastname(updated.getLastname());
-    existing.setEmail(updated.getEmail());
-    existing.setDepartment(updated.getDepartment());
-    existing.setSalary(updated.getSalary());
-    existing.setActive(updated.getActive());
+    if (updated.getFirstname() != null) existing.setFirstname(updated.getFirstname());
+    if (updated.getLastname() != null) existing.setLastname(updated.getLastname());
+    if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
+    if (updated.getDepartment() != null) existing.setDepartment(updated.getDepartment());
+    if (updated.getSalary() != null) existing.setSalary(updated.getSalary());
+    if (updated.getActive() != null) existing.setActive(updated.getActive());
     return employeeRepository.save(existing);
   }
 
