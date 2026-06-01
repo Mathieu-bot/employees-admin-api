@@ -26,6 +26,10 @@ public class InternService {
     return internRepository.findAll(specification, pageable);
   }
 
+  public List<Intern> findAll(Specification<Intern> specification) {
+    return internRepository.findAll(specification);
+  }
+
   public List<Intern> findAll() {
     return internRepository.findAll();
   }

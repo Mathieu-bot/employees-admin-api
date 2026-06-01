@@ -25,6 +25,10 @@ public class EmployeeService {
     return employeeRepository.findAll(specification, pageable);
   }
 
+  public List<Employee> findAll(Specification<Employee> specification) {
+    return employeeRepository.findAll(specification);
+  }
+
   public List<Employee> findAll() {
     return employeeRepository.findAll();
   }
