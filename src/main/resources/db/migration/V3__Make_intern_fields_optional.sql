@@ -1,0 +1,5 @@
+ALTER TABLE intern
+    ALTER COLUMN email      DROP NOT NULL,
+    ALTER COLUMN department DROP NOT NULL,
+    ALTER COLUMN start_date DROP NOT NULL,
+    ALTER COLUMN end_date   DROP NOT NULL;
