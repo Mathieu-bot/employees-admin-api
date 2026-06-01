@@ -1,6 +1,7 @@
 package school.hei.employees.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,22 +48,28 @@ public class InternService {
   @Transactional
   public Intern save(Intern intern) {
     validateManager(intern.getManagerId());
+    if (intern.getEmail() == null) intern.setEmail("");
+    if (intern.getDepartment() == null) intern.setDepartment("");
+    if (intern.getStartDate() == null) intern.setStartDate(LocalDate.now());
+    if (intern.getEndDate() == null) intern.setEndDate(LocalDate.now().plusMonths(3));
     return internRepository.save(intern);
   }
 
   @Transactional
   public Intern update(Integer id, Intern updated) {
     Intern existing = findById(id);
-    validateManager(updated.getManagerId());
-    existing.setFirstname(updated.getFirstname());
-    existing.setLastname(updated.getLastname());
-    existing.setEmail(updated.getEmail());
-    existing.setDepartment(updated.getDepartment());
-    existing.setRemunerated(updated.getRemunerated());
-    existing.setSalary(updated.getSalary());
-    existing.setManagerId(updated.getManagerId());
-    existing.setStartDate(updated.getStartDate());
-    existing.setEndDate(updated.getEndDate());
+    if (updated.getManagerId() != null) {
+      validateManager(updated.getManagerId());
+    }
+    if (updated.getFirstname() != null) existing.setFirstname(updated.getFirstname());
+    if (updated.getLastname() != null) existing.setLastname(updated.getLastname());
+    if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
+    if (updated.getDepartment() != null) existing.setDepartment(updated.getDepartment());
+    if (updated.getRemunerated() != null) existing.setRemunerated(updated.getRemunerated());
+    if (updated.getSalary() != null) existing.setSalary(updated.getSalary());
+    if (updated.getManagerId() != null) existing.setManagerId(updated.getManagerId());
+    if (updated.getStartDate() != null) existing.setStartDate(updated.getStartDate());
+    if (updated.getEndDate() != null) existing.setEndDate(updated.getEndDate());
     return internRepository.save(existing);
   }
 
