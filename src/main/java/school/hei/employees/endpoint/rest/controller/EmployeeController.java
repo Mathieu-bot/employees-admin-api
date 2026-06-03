@@ -1,12 +1,12 @@
 package school.hei.employees.endpoint.rest.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import school.hei.employees.conf.JsonServerUtils;
-import school.hei.employees.repository.model.Employee;
+import school.hei.employees.model.Employee;
 import school.hei.employees.service.EmployeeService;
 
 @RestController
@@ -30,27 +29,27 @@ public class EmployeeController {
   private final EmployeeService employeeService;
 
   @GetMapping
-  public ResponseEntity<List<Employee>> list(
-      @RequestParam(required = false) List<Integer> id, HttpServletRequest request) {
+  public ResponseEntity<?> list(
+      @RequestParam(required = false) List<Integer> id,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(name = "page_size", defaultValue = "10") int pageSize,
+      @RequestParam(required = false) String sort,
+      @RequestParam(required = false) String q) {
 
-    // GET_MANY: repeated ?id= params
-    if (id != null && id.size() > 1) {
+    // GET_MANY: ?id=1&id=2 (utilisé par ReferenceField)
+    if (id != null && !id.isEmpty()) {
       return ResponseEntity.ok(employeeService.findAllById(id));
     }
 
-    Map<String, String> params = extractParams(request);
-    Specification<Employee> spec = JsonServerUtils.searchFilter(params, Employee.class);
+    // Filtre de recherche q (firstname, lastname, email)
+    Specification<Employee> spec = searchByQ(q);
 
-    // GET_LIST: paginated
-    if (params.containsKey("_start") && params.containsKey("_end")) {
-      Pageable pageable = JsonServerUtils.pageableFrom(params);
-      Page<Employee> page = employeeService.findAll(spec, pageable);
-      return JsonServerUtils.toResponse(page);
-    }
+    // Pagination standard Spring Boot
+    Sort springSort = parseSort(sort);
+    Pageable pageable = PageRequest.of(page, pageSize, springSort);
+    Page<Employee> result = employeeService.findAll(spec, pageable);
 
-    // GET_MANY_REFERENCE or GET_LIST without pagination: unpaginated filtered
-    List<Employee> employees = employeeService.findAll(spec);
-    return ResponseEntity.ok(employees);
+    return ResponseEntity.ok(result);
   }
 
   @GetMapping("/{id}")
@@ -73,17 +72,24 @@ public class EmployeeController {
     employeeService.deleteById(id);
   }
 
-  private static Map<String, String> extractParams(HttpServletRequest request) {
-    Map<String, String> params = new HashMap<>();
-    request
-        .getParameterNames()
-        .asIterator()
-        .forEachRemaining(
-            key -> {
-              if (!"id".equals(key)) {
-                params.put(key, request.getParameter(key));
-              }
-            });
-    return params;
+  private Specification<Employee> searchByQ(String q) {
+    return (root, query, cb) -> {
+      if (q == null || q.trim().isEmpty()) return cb.conjunction();
+      String pattern = "%" + q.toLowerCase() + "%";
+      return cb.or(
+          cb.like(cb.lower(root.get("firstname")), pattern),
+          cb.like(cb.lower(root.get("lastname")), pattern),
+          cb.like(cb.lower(root.get("email")), pattern));
+    };
+  }
+
+  private Sort parseSort(String sort) {
+    if (sort == null || sort.isBlank()) return Sort.unsorted();
+    String[] parts = sort.split(",");
+    return Sort.by(
+        parts.length > 1 && "desc".equalsIgnoreCase(parts[1])
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC,
+        parts[0]);
   }
 }

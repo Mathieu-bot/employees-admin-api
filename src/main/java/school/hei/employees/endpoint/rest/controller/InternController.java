@@ -1,12 +1,11 @@
 package school.hei.employees.endpoint.rest.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,8 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import school.hei.employees.conf.JsonServerUtils;
-import school.hei.employees.repository.model.Intern;
+import school.hei.employees.model.Intern;
 import school.hei.employees.service.InternService;
 
 @RestController
@@ -30,27 +28,25 @@ public class InternController {
   private final InternService internService;
 
   @GetMapping
-  public ResponseEntity<List<Intern>> list(
-      @RequestParam(required = false) List<Integer> id, HttpServletRequest request) {
+  public ResponseEntity<?> list(
+      @RequestParam(required = false) List<Integer> id,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(name = "page_size", defaultValue = "10") int pageSize,
+      @RequestParam(required = false) String sort,
+      @RequestParam(required = false) String q) {
 
-    // GET_MANY: repeated ?id= params
-    if (id != null && id.size() > 1) {
+    // GET_MANY: ?id=1&id=2
+    if (id != null && !id.isEmpty()) {
       return ResponseEntity.ok(internService.findAllById(id));
     }
 
-    Map<String, String> params = extractParams(request);
-    Specification<Intern> spec = JsonServerUtils.searchFilter(params, Intern.class);
+    Specification<Intern> spec = searchByQ(q);
 
-    // GET_LIST: paginated
-    if (params.containsKey("_start") && params.containsKey("_end")) {
-      Pageable pageable = JsonServerUtils.pageableFrom(params);
-      Page<Intern> page = internService.findAll(spec, pageable);
-      return JsonServerUtils.toResponse(page);
-    }
+    Sort springSort = parseSort(sort);
+    Pageable pageable = PageRequest.of(page, pageSize, springSort);
+    Page<Intern> result = internService.findAll(spec, pageable);
 
-    // GET_MANY_REFERENCE or GET_LIST without pagination: unpaginated filtered
-    List<Intern> interns = internService.findAll(spec);
-    return ResponseEntity.ok(interns);
+    return ResponseEntity.ok(result);
   }
 
   @GetMapping("/{id}")
@@ -73,17 +69,24 @@ public class InternController {
     internService.deleteById(id);
   }
 
-  private static Map<String, String> extractParams(HttpServletRequest request) {
-    Map<String, String> params = new HashMap<>();
-    request
-        .getParameterNames()
-        .asIterator()
-        .forEachRemaining(
-            key -> {
-              if (!"id".equals(key)) {
-                params.put(key, request.getParameter(key));
-              }
-            });
-    return params;
+  private Specification<Intern> searchByQ(String q) {
+    return (root, query, cb) -> {
+      if (q == null || q.trim().isEmpty()) return cb.conjunction();
+      String pattern = "%" + q.toLowerCase() + "%";
+      return cb.or(
+          cb.like(cb.lower(root.get("firstname")), pattern),
+          cb.like(cb.lower(root.get("lastname")), pattern),
+          cb.like(cb.lower(root.get("email")), pattern));
+    };
+  }
+
+  private Sort parseSort(String sort) {
+    if (sort == null || sort.isBlank()) return Sort.unsorted();
+    String[] parts = sort.split(",");
+    return Sort.by(
+        parts.length > 1 && "desc".equalsIgnoreCase(parts[1])
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC,
+        parts[0]);
   }
 }
