@@ -10,9 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import school.hei.employees.model.Employee;
+import school.hei.employees.model.Intern;
 import school.hei.employees.repository.EmployeeRepository;
 import school.hei.employees.repository.InternRepository;
-import school.hei.employees.repository.model.Employee;
 
 @Service
 @AllArgsConstructor
@@ -54,8 +55,7 @@ public class EmployeeService {
     boolean isBeingDeactivated =
         Boolean.FALSE.equals(updated.getActive()) && Boolean.TRUE.equals(existing.getActive());
     if (isBeingDeactivated) {
-      List<school.hei.employees.repository.model.Intern> interns =
-          internRepository.findByManagerId(id);
+      List<Intern> interns = internRepository.findByManagerId(id);
       if (!interns.isEmpty()) {
         throw new ResponseStatusException(
             HttpStatus.CONFLICT, "Impossible de désactiver un employé qui a encore des stagiaires");
@@ -79,8 +79,7 @@ public class EmployeeService {
   @Transactional
   public Employee deactivate(Integer id) {
     Employee employee = findById(id);
-    List<school.hei.employees.repository.model.Intern> interns =
-        internRepository.findByManagerId(id);
+    List<Intern> interns = internRepository.findByManagerId(id);
     if (!interns.isEmpty()) {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Impossible de désactiver un employé qui a encore des stagiaires");

@@ -11,10 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import school.hei.employees.model.Employee;
+import school.hei.employees.model.Intern;
 import school.hei.employees.repository.EmployeeRepository;
 import school.hei.employees.repository.InternRepository;
-import school.hei.employees.repository.model.Employee;
-import school.hei.employees.repository.model.Intern;
 
 @Service
 @AllArgsConstructor
