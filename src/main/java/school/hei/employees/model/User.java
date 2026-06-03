@@ -1,4 +1,4 @@
-package school.hei.employees.repository.model;
+package school.hei.employees.model;
 
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
