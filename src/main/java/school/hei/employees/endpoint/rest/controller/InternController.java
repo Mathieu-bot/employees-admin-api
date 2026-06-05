@@ -33,14 +33,23 @@ public class InternController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(name = "page_size", defaultValue = "10") int pageSize,
       @RequestParam(required = false) String sort,
-      @RequestParam(required = false) String q) {
+      @RequestParam(required = false) String q,
+      @RequestParam(name = "managerId", required = false) Integer managerId,
+      @RequestParam(required = false) Boolean remunerated) {
 
-    // GET_MANY: ?id=1&id=2
     if (id != null && !id.isEmpty()) {
       return ResponseEntity.ok(internService.findAllById(id));
     }
 
     Specification<Intern> spec = searchByQ(q);
+
+    if (managerId != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("managerId"), managerId));
+    }
+
+    if (remunerated != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("remunerated"), remunerated));
+    }
 
     Sort springSort = parseSort(sort);
     Pageable pageable = PageRequest.of(page, pageSize, springSort);
