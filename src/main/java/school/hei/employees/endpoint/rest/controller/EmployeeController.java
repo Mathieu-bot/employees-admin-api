@@ -33,17 +33,24 @@ public class EmployeeController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(name = "page_size", defaultValue = "10") int pageSize,
       @RequestParam(required = false) String sort,
-      @RequestParam(required = false) String q) {
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) Boolean active,
+      @RequestParam(required = false) String department) {
 
-    // GET_MANY: ?id=1&id=2 (utilisé par ReferenceField)
     if (id != null && !id.isEmpty()) {
       return ResponseEntity.ok(employeeService.findAllById(id));
     }
 
-    // Filtre de recherche q (firstname, lastname, email)
     Specification<Employee> spec = searchByQ(q);
 
-    // Pagination standard Spring Boot
+    if (active != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("active"), active));
+    }
+
+    if (department != null && !department.isEmpty()) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("department"), department));
+    }
+
     Sort springSort = parseSort(sort);
     Pageable pageable = PageRequest.of(page, pageSize, springSort);
     Page<Employee> result = employeeService.findAll(spec, pageable);
