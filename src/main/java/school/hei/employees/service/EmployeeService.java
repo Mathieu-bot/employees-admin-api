@@ -1,6 +1,5 @@
 package school.hei.employees.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,7 +40,7 @@ public class EmployeeService {
   public Employee findById(Integer id) {
     return employeeRepository
         .findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + id));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found with id: " + id));
   }
 
   @Transactional
@@ -73,18 +72,13 @@ public class EmployeeService {
   @Transactional
   public void deleteById(Integer id) {
     Employee employee = findById(id);
-    employeeRepository.delete(employee);
-  }
-
-  @Transactional
-  public Employee deactivate(Integer id) {
-    Employee employee = findById(id);
     List<Intern> interns = internRepository.findByManagerId(id);
     if (!interns.isEmpty()) {
       throw new ResponseStatusException(
-          HttpStatus.CONFLICT, "Impossible de désactiver un employé qui a encore des stagiaires");
+          HttpStatus.CONFLICT, "Impossible de supprimer un employé qui encadre encore des stagiaires");
     }
-    employee.setActive(false);
-    return employeeRepository.save(employee);
+    employeeRepository.delete(employee);
   }
+
+
 }
