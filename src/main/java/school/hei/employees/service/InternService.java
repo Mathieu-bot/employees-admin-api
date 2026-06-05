@@ -1,6 +1,5 @@
 package school.hei.employees.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -42,7 +41,10 @@ public class InternService {
   public Intern findById(Integer id) {
     return internRepository
         .findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Intern not found with id: " + id));
+        .orElseThrow(
+            () ->
+                new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Intern not found with id: " + id));
   }
 
   @Transactional
@@ -91,7 +93,7 @@ public class InternService {
                 () ->
                     new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Impossible d'assigner un stagiaire à un manager inactif"));
+                        "Le manager spécifié n'existe pas"));
     if (!Boolean.TRUE.equals(manager.getActive())) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Impossible d'assigner un stagiaire à un manager inactif");
