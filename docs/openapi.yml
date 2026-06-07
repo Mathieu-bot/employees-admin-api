@@ -1,0 +1,573 @@
+openapi: 3.0.3
+info:
+  title: Employees Admin API
+  description: |
+    API for managing employees and interns.
+
+    ## Resources
+    - **employees** — Full CRUD for employees
+    - **interns** — Full CRUD for interns
+
+    ## Listing & Filtering
+    All GET list endpoints support:
+    - `q` — Full-text search (firstname, lastname, email)
+    - `page` — Page number (0-indexed, default: 0)
+    - `page_size` — Page size (default: 10)
+    - `sort` — Sort in `field,asc|desc` format
+
+    ## Error codes
+    - `400` — Bad request (e.g., manager not found)
+    - `404` — Resource not found
+    - `409` — Conflict (e.g., deleting an employee who still manages interns)
+  version: "1.0.0"
+
+paths:
+  /ping:
+    get:
+      summary: Health check
+      operationId: ping
+      tags: [Health]
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: pong
+
+  /health/email:
+    get:
+      summary: Send a test email to verify mailing configuration
+      operationId: healthEmail
+      tags: [Health]
+      parameters:
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          description: Recipient email address
+      responses:
+        "200":
+          description: Email sent successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /employees:
+    get:
+      summary: List all employees
+      operationId: listEmployees
+      tags: [Employees]
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Filter by one or more IDs (returns a plain list, not paginated)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-indexed)
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: "lastname,asc"
+          description: Sort field and direction
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Full-text search query
+        - name: active
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+        - name: department
+          in: query
+          schema:
+            type: string
+          description: Filter by department
+      responses:
+        "200":
+          description: Paginated list of employees (or plain array when `id` is used)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/PageEmployee"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/Employee"
+
+    post:
+      summary: Create a new employee
+      operationId: createEmployee
+      tags: [Employees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeWrite"
+      responses:
+        "200":
+          description: Created employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      summary: Get an employee by ID
+      operationId: getEmployee
+      tags: [Employees]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update an employee
+      operationId: updateEmployee
+      tags: [Employees]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeWrite"
+      responses:
+        "200":
+          description: Updated employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete an employee
+      operationId: deleteEmployee
+      tags: [Employees]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Employee deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /interns:
+    get:
+      summary: List all interns
+      operationId: listInterns
+      tags: [Interns]
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Filter by one or more IDs (returns a plain list, not paginated)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-indexed)
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: "firstname,asc"
+          description: Sort field and direction
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Full-text search query
+        - name: managerId
+          in: query
+          schema:
+            type: integer
+          description: Filter by manager ID
+        - name: remunerated
+          in: query
+          schema:
+            type: boolean
+          description: Filter by remunerated status
+      responses:
+        "200":
+          description: Paginated list of interns (or plain array when `id` is used)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/PageIntern"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/Intern"
+
+    post:
+      summary: Create a new intern
+      operationId: createIntern
+      tags: [Interns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternWrite"
+      responses:
+        "200":
+          description: Created intern
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Intern"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /interns/{id}:
+    get:
+      summary: Get an intern by ID
+      operationId: getIntern
+      tags: [Interns]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Intern found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Intern"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update an intern
+      operationId: updateIntern
+      tags: [Interns]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternWrite"
+      responses:
+        "200":
+          description: Updated intern
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Intern"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete an intern
+      operationId: deleteIntern
+      tags: [Interns]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Intern deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: Auto-generated ID
+        firstname:
+          type: string
+          example: John
+        lastname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@company.com
+        department:
+          type: string
+          example: IT
+
+    Employee:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            salary:
+              type: integer
+              example: 50000
+            active:
+              type: boolean
+              example: true
+
+    EmployeeWrite:
+      type: object
+      required:
+        - firstname
+        - lastname
+        - email
+        - department
+        - salary
+        - active
+      properties:
+        firstname:
+          type: string
+          example: John
+        lastname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@company.com
+        department:
+          type: string
+          example: IT
+        salary:
+          type: integer
+          example: 50000
+        active:
+          type: boolean
+          example: true
+
+    Intern:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            remunerated:
+              type: boolean
+              example: false
+            salary:
+              type: integer
+              nullable: true
+              example: null
+            managerId:
+              type: integer
+              nullable: true
+              example: 1
+              description: ID of the managing employee
+            startDate:
+              type: string
+              format: date
+              nullable: true
+              example: "2026-01-15"
+            endDate:
+              type: string
+              format: date
+              nullable: true
+              example: "2026-06-15"
+
+    InternWrite:
+      type: object
+      required:
+        - firstname
+        - lastname
+        - email
+        - department
+      properties:
+        firstname:
+          type: string
+          example: Jane
+        lastname:
+          type: string
+          example: Smith
+        email:
+          type: string
+          format: email
+          example: jane.smith@company.com
+        department:
+          type: string
+          example: HR
+        remunerated:
+          type: boolean
+          example: false
+        salary:
+          type: integer
+          nullable: true
+          example: null
+        managerId:
+          type: integer
+          nullable: true
+          example: 1
+          description: ID of the managing employee
+        startDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-01-15"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-06-15"
+
+    PageEmployee:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/Employee"
+        totalElements:
+          type: integer
+          example: 42
+        last:
+          type: boolean
+          example: false
+        first:
+          type: boolean
+          example: true
+        totalPages:
+          type: integer
+          example: 5
+        size:
+          type: integer
+          example: 10
+        number:
+          type: integer
+          example: 0
+
+    PageIntern:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/Intern"
+        totalElements:
+          type: integer
+          example: 15
+        last:
+          type: boolean
+          example: false
+        first:
+          type: boolean
+          example: true
+        totalPages:
+          type: integer
+          example: 2
+        size:
+          type: integer
+          example: 10
+        number:
+          type: integer
+          example: 0
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Le manager spécifié n'existe pas"
+              status:
+                type: integer
+                example: 400
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Employee not found with id: 99"
+              status:
+                type: integer
+                example: 404
+    Conflict:
+      description: Conflict — the operation cannot be completed due to existing dependencies
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Impossible de supprimer un employé qui encadre encore des stagiaires"
+              status:
+                type: integer
+                example: 409
