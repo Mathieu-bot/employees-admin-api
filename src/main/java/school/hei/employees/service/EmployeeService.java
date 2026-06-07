@@ -40,7 +40,10 @@ public class EmployeeService {
   public Employee findById(Integer id) {
     return employeeRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found with id: " + id));
+        .orElseThrow(
+            () ->
+                new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Employee not found with id: " + id));
   }
 
   @Transactional
@@ -75,10 +78,9 @@ public class EmployeeService {
     List<Intern> interns = internRepository.findByManagerId(id);
     if (!interns.isEmpty()) {
       throw new ResponseStatusException(
-          HttpStatus.CONFLICT, "Impossible de supprimer un employé qui encadre encore des stagiaires");
+          HttpStatus.CONFLICT,
+          "Impossible de supprimer un employé qui encadre encore des stagiaires");
     }
     employeeRepository.delete(employee);
   }
-
-
 }

@@ -92,8 +92,7 @@ public class InternService {
             .orElseThrow(
                 () ->
                     new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Le manager spécifié n'existe pas"));
+                        HttpStatus.BAD_REQUEST, "Le manager spécifié n'existe pas"));
     if (!Boolean.TRUE.equals(manager.getActive())) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Impossible d'assigner un stagiaire à un manager inactif");
