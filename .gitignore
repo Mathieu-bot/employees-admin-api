@@ -39,11 +39,5 @@ out/
 .aws-sam
 **.toml
 
-### Env files ###
-.env
-.env.local
-.env.production
-.env.development
-
 ### Mac OS ###
 .DS_Store
